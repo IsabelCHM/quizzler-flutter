@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+import 'QuestionBank.dart';
+import 'dart:io';
+
+QuestionBank qb = new QuestionBank();
 
 void main() => runApp(Quizzler());
 
@@ -25,6 +30,64 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
+
+  List<Icon> scores = [];
+
+
+  //For some reason, I cannot create questions first then add it to a list.
+  //This gives me some cannot use instance error
+  //Perhaps something to do with state
+
+
+  int qnNo = 0;
+  int numberCorrect = 0;
+
+  void checkCorrect(bool ans){
+    if (ans == qb.getQuestionByNumber(qnNo).answer)
+      {
+        scores.add(Icon(
+          Icons.check,
+          color: Colors.green,
+        ));
+        numberCorrect += 1;
+      }
+    else {
+      scores.add(Icon(
+        Icons.close,
+        color: Colors.red,
+      ));
+    }
+
+    int numOfQns = qb.numQns();
+    if (qnNo < numOfQns - 1)
+      {
+        qnNo += 1;
+      }
+    else {
+      sleep(Duration(seconds:1));
+
+      Alert(
+        context: context,
+        type: AlertType.error,
+        title: "End of Quiz",
+        desc: "You got $numberCorrect out of $numOfQns correct",
+        buttons: [
+          DialogButton(
+            child: Text(
+              "COOL",
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+            onPressed: () => Navigator.pop(context),
+            width: 120,
+          )
+        ],
+      ).show();
+
+      qnNo = 0;
+      scores = [];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,7 +100,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                qb.getQuestionByNumber(qnNo).question,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -62,6 +125,9 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked true.
+                setState(() {
+                  checkCorrect(true);
+                });
               },
             ),
           ),
@@ -80,11 +146,18 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked false.
+                setState(() {
+                  checkCorrect(false);
+                });
+
               },
             ),
           ),
         ),
         //TODO: Add a Row here as your score keeper
+        Row(
+          children: scores,
+        )
       ],
     );
   }
